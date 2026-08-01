@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>یه سوال کوچولو :)</title>
+<title>با من میای سر قرار؟</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -181,9 +181,8 @@
   <div class="step" id="step3">
     <div class="thanks">
       <span class="emoji">🎊</span>
-      <h2>ثبت شد!</h2>
+      <h2>هوووراااا! 🥳</h2>
       <p id="thanksLine1"></p>
-      <p id="thanksLine2"></p>
       <div class="stamp" id="thanksStamp"></div>
     </div>
   </div>
@@ -195,24 +194,11 @@
 
 <script>
 /* =========================================================
-   CONFIG — fill these in before you deploy to GitHub Pages.
-   Create a fine-grained GitHub Personal Access Token scoped
-   to ONLY "Issues: write" on this one repo (repo settings ->
-   Developer settings -> Fine-grained tokens). Every response
-   will be saved as a new Issue in your repo, visible only to
-   you (and collaborators) if the repo is private.
-
-   ⚠️ Heads up: any token placed in client-side JS is visible
-   to anyone who views the page source or network requests.
-   Scoping it to "Issues: write" on a single repo limits the
-   damage (worst case: someone spams fake issues), but it is
-   not a fully private secret. If you'd rather not expose a
-   token at all, say so and I'll switch this to a no-token
-   option (e.g. a Formspree endpoint) instead.
+   CONFIG — Formspree endpoint. This is safe to be public;
+   it's write-only (submits go to your Formspree dashboard,
+   which only you can log into and view). No secret involved.
    ========================================================= */
-const GITHUB_OWNER  = "Aminem-Mohammadi";
-const GITHUB_REPO   = "data";
-const GITHUB_TOKEN  = "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";
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/mykrqnwp";
 
 // ---------- background stars ----------
 const starsWrap = document.getElementById('stars');
@@ -332,28 +318,23 @@ function fmtFa(date){
   catch(e){ return date.toString(); }
 }
 
-async function saveToGithub(entry){
-  const body =
-`**تاریخ:** ${entry.date || '—'}
-**ساعت:** ${entry.time || '—'}
-**پیام:** ${entry.message || '—'}
-**تعداد فرار:** ${entry.dodges}
-**زمان ثبت:** ${entry.respondedAt}`;
-
-  const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues`, {
+async function saveToFormspree(entry){
+  const res = await fetch(FORMSPREE_ENDPOINT, {
     method: 'POST',
     headers: {
-      'Authorization': `token ${GITHUB_TOKEN}`,
-      'Accept': 'application/vnd.github+json',
+      'Accept': 'application/json',
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      title: `پاسخ جدید — ${entry.respondedAt}`,
-      body
+      'تاریخ': entry.date || '—',
+      'ساعت': entry.time || '—',
+      'پیام': entry.message || '—',
+      'تعداد فرار': entry.dodges,
+      'زمان ثبت': entry.respondedAt
     })
   });
   if(!res.ok){
-    throw new Error('GitHub API error: ' + res.status);
+    throw new Error('Formspree error: ' + res.status);
   }
 }
 
@@ -373,21 +354,22 @@ submitBtn.addEventListener('click', async ()=>{
   submitBtn.textContent = 'در حال ثبت...';
 
   try{
-    await saveToGithub(entry);
+    await saveToFormspree(entry);
+    document.querySelector('#step3 .emoji').textContent = '🎉';
+    document.querySelector('#step3 h2').textContent = 'هووورااااا! ثبت شد 🥳';
+    document.getElementById('thanksLine1').textContent =
+      (dateVal||timeVal) ? `پس می‌بینمت ${dateVal||''} ${timeVal ? 'ساعت '+timeVal : ''}` : 'زود بهت خبر می‌دم برای وقتش 💌';
+    document.getElementById('thanksStamp').textContent = 'ثبت شد در ' + fmtFa(respondedAt);
+    goToStep(step3);
   }catch(err){
     console.error(err);
-    // still show a thank-you screen so the experience doesn't break for the visitor,
-    // but log the failure for you to notice in devtools if the token/repo isn't set up yet.
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'ثبت کن ✅';
+    document.querySelector('#step3 .emoji').textContent = '😕';
+    document.querySelector('#step3 h2').textContent = 'یه مشکلی پیش اومد';
+    document.getElementById('thanksLine1').textContent = 'اتصال برقرار نشد، یه بار دیگه امتحان کن.';
+    document.getElementById('thanksStamp').textContent = '';
   }
-
-  document.getElementById('thanksLine1').textContent =
-    (dateVal||timeVal) ? `پس می‌بینمت ${dateVal||''} ${timeVal ? 'ساعت '+timeVal : ''}` : 'زود بهت خبر می‌دم برای وقتش 💌';
-  document.getElementById('thanksLine2').textContent = dodgeCount > 0
-    ? `و ضمناً... ${dodgeCount} بار سعی کردی فرار کنی 😏`
-    : 'خیلی هم زود تصمیم گرفتی 😍';
-  document.getElementById('thanksStamp').textContent = 'ثبت شد در ' + fmtFa(respondedAt);
-
-  goToStep(step3);
 });
 </script>
 
