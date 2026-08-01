@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>با من میای سر قرار؟</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night-deep:#1c1033;
+    --night-mid:#3a1f52;
+    --dusk-rose:#7a2f5e;
+    --accent-pink:#ff5c8a;
+    --accent-pink-dark:#e14577;
+    --accent-gold:#ffc857;
+    --cream:#fdf6ec;
+    --muted:#cdb3d1;
+    --card-bg:rgba(20,10,35,0.55);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    width:100%;min-height:100vh;
+    font-family:'Vazirmatn',sans-serif;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(255,92,138,0.18), transparent 45%),
+      radial-gradient(ellipse at 85% 80%, rgba(255,200,87,0.12), transparent 40%),
+      linear-gradient(160deg, var(--night-deep) 0%, var(--night-mid) 55%, var(--dusk-rose) 100%);
+    color:var(--cream);
+    overflow-x:hidden;
+    position:relative;
+  }
+  #stars{ position:fixed;inset:0;pointer-events:none;z-index:0; }
+  .star{
+    position:absolute;border-radius:50%;
+    background:var(--cream); opacity:0.6;
+    animation:twinkle 3s ease-in-out infinite;
+  }
+  @keyframes twinkle{
+    0%,100%{opacity:0.15;transform:scale(1);}
+    50%{opacity:0.9;transform:scale(1.4);}
+  }
+  main{
+    position:relative;z-index:1;
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:32px 20px 100px;
+    text-align:center;
+  }
+  .eyebrow{ font-size:13px;letter-spacing:0.5px;color:var(--muted); margin-bottom:10px;font-weight:500; }
+  h1{ font-size:clamp(18px,3.2vw,24px); font-weight:700; margin:0 0 8px; line-height:1.5; }
+  h1 .glow{
+    background:linear-gradient(90deg,var(--accent-pink),var(--accent-gold));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  p.sub{ color:var(--muted); font-size:clamp(13px,2vw,15px); max-width:480px; margin:0 0 44px; }
+  .btn-row{
+    display:flex;gap:20px;align-items:center;justify-content:center;
+    flex-wrap:wrap; min-height:80px;
+  }
+  button{
+    font-family:'Vazirmatn',sans-serif;
+    border:none;cursor:pointer;
+    border-radius:999px;
+    font-weight:700;
+    transition:transform 0.15s ease, box-shadow 0.15s ease, opacity 0.4s ease;
+  }
+  #yesBtn{
+    background:linear-gradient(135deg,var(--accent-pink),var(--accent-pink-dark));
+    color:var(--cream);
+    padding:18px 40px;
+    font-size:19px;
+    box-shadow:0 8px 24px rgba(255,92,138,0.35);
+    transform:scale(1);
+    transform-origin:center;
+  }
+  #yesBtn:hover{filter:brightness(1.05);}
+  .dodge-size{ width:92px; height:44px; }
+  #noSlot{ visibility:hidden; }
+  #noBtn{
+    position:fixed;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.25);
+    color:var(--cream);
+    font-size:13px;
+    font-weight:600;
+    backdrop-filter:blur(4px);
+    z-index:5;
+    transition:left 0.08s linear, top 0.08s linear, transform 0.5s ease, opacity 0.3s ease;
+  }
+
+  /* --- form step --- */
+  .card{
+    background:var(--card-bg);
+    border:1px solid rgba(255,255,255,0.12);
+    backdrop-filter:blur(10px);
+    border-radius:24px;
+    padding:36px 30px;
+    max-width:420px; width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+  }
+  .card h2{ font-size:24px;margin:0 0 6px;font-weight:800; }
+  .card p{ color:var(--muted);font-size:14px;margin:0 0 26px; }
+  .field{ text-align:right;margin-bottom:16px; }
+  .field label{ display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:500; }
+  .field input, .field textarea{
+    width:100%; padding:12px 14px; border-radius:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.06);
+    color:var(--cream);
+    font-family:'Vazirmatn',sans-serif;
+    font-size:15px; outline:none;
+  }
+  .field input:focus, .field textarea:focus{ border-color:var(--accent-pink); }
+  .field textarea{ resize:vertical;min-height:70px; }
+  .field input[type="date"], .field input[type="time"]{ color-scheme:dark; }
+  #submitBtn{
+    width:100%;
+    background:linear-gradient(135deg,var(--accent-pink),var(--accent-gold));
+    color:#1c1033; padding:15px; font-size:16px; margin-top:6px;
+  }
+  #submitBtn:hover{transform:scale(1.02);}
+  #submitBtn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+
+  /* --- thank you step --- */
+  .thanks{ display:none;text-align:center; }
+  .thanks .emoji{ font-size:56px;margin-bottom:14px;display:block; }
+  .thanks h2{ font-size:26px;margin:0 0 10px;font-weight:800; }
+  .thanks p{ color:var(--muted);font-size:15px;margin:4px 0; }
+  .thanks .stamp{
+    margin-top:20px;font-size:13px;color:var(--accent-gold);
+    background:rgba(255,200,87,0.1);
+    border:1px solid rgba(255,200,87,0.25);
+    padding:10px 16px;border-radius:12px;display:inline-block;
+  }
+  .step{ display:none; }
+  .step.active{ display:flex;flex-direction:column;align-items:center; }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<main>
+
+  <!-- STEP 1: question -->
+  <div class="step active" id="step1">
+    <div class="eyebrow">یه سوال دارم ازت...</div>
+    <h1>با من میای سر <span class="glow">قرار</span> 🥹؟</h1>
+    <p class="sub">فقط یه سوال ساده‌ست... 😏</p>
+    <div class="btn-row">
+      <button id="yesBtn">بله 🥳</button>
+      <div id="noSlot" class="dodge-size"></div>
+    </div>
+  </div>
+
+  <!-- STEP 2: date/time form -->
+  <div class="step" id="step2">
+    <div class="card">
+      <h2>خب پس بریم که بریم! 🎉</h2>
+      <p>بگو کِی برات خوبه تا هماهنگ کنیم.</p>
+      <div class="field">
+        <label for="dateInput">چه روزی؟</label>
+        <input type="date" id="dateInput">
+      </div>
+      <div class="field">
+        <label for="timeInput">چه ساعتی؟</label>
+        <input type="time" id="timeInput">
+      </div>
+      <div class="field">
+        <label for="msgInput">چیزی هست بگی؟ (اختیاری)</label>
+        <textarea id="msgInput" placeholder="مثلاً کجا بریم..."></textarea>
+      </div>
+      <button id="submitBtn">ثبت کن ✅</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: thank you -->
+  <div class="step" id="step3">
+    <div class="thanks">
+      <span class="emoji">🎊</span>
+      <h2>ثبت شد!</h2>
+      <p id="thanksLine1"></p>
+      <p id="thanksLine2"></p>
+      <div class="stamp" id="thanksStamp"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- the runaway "no" button lives outside normal flow so it can roam the whole viewport -->
+<button id="noBtn" class="dodge-size">نه 😩</button>
+
+<script>
+/* =========================================================
+   CONFIG — fill these in before you deploy to GitHub Pages.
+   Create a fine-grained GitHub Personal Access Token scoped
+   to ONLY "Issues: write" on this one repo (repo settings ->
+   Developer settings -> Fine-grained tokens). Every response
+   will be saved as a new Issue in your repo, visible only to
+   you (and collaborators) if the repo is private.
+
+   ⚠️ Heads up: any token placed in client-side JS is visible
+   to anyone who views the page source or network requests.
+   Scoping it to "Issues: write" on a single repo limits the
+   damage (worst case: someone spams fake issues), but it is
+   not a fully private secret. If you'd rather not expose a
+   token at all, say so and I'll switch this to a no-token
+   option (e.g. a Formspree endpoint) instead.
+   ========================================================= */
+const GITHUB_OWNER  = "YOUR_GITHUB_USERNAME";
+const GITHUB_REPO   = "YOUR_REPO_NAME";
+const GITHUB_TOKEN  = "YOUR_FINE_GRAINED_TOKEN";
+
+// ---------- background stars ----------
+const starsWrap = document.getElementById('stars');
+for(let i=0;i<40;i++){
+  const s = document.createElement('div');
+  s.className='star';
+  const size = Math.random()*3+1;
+  s.style.width = size+'px';
+  s.style.height = size+'px';
+  s.style.left = Math.random()*100+'%';
+  s.style.top = Math.random()*100+'%';
+  s.style.animationDelay = (Math.random()*3)+'s';
+  starsWrap.appendChild(s);
+}
+
+// ---------- real-time cursor-avoiding "no" button ----------
+const yesBtn = document.getElementById('yesBtn');
+const noBtn = document.getElementById('noBtn');
+const noSlot = document.getElementById('noSlot');
+
+let dodgeCount = 0;
+let lastDodgeTick = 0;
+const SAFE_DIST = 130;   // px — how close the cursor can get before it flees
+const PUSH_DIST = 170;   // px — how far it jumps to once it flees
+const MAX_SCALE = 3.4;   // how big "بله" can grow, keeps growing forever but capped so it never breaks layout
+const MIN_NO_SCALE = 0.45; // how small "نه" can shrink to, keeps shrinking very gently but never vanishes
+let onStep1 = true;
+
+function placeNoBtn(){
+  const r = noSlot.getBoundingClientRect();
+  noBtn.style.left = r.left + 'px';
+  noBtn.style.top = r.top + 'px';
+}
+window.addEventListener('load', placeNoBtn);
+window.addEventListener('resize', placeNoBtn);
+
+function clamp(val, min, max){ return Math.max(min, Math.min(max, val)); }
+
+function fleeFrom(x, y){
+  if(!onStep1) return;
+  const rect = noBtn.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  const dx = cx - x;
+  const dy = cy - y;
+  const dist = Math.hypot(dx, dy);
+  if(dist > SAFE_DIST) return;
+
+  const angle = Math.atan2(dy, dx) || (Math.random()*Math.PI*2);
+  let newCx = x + Math.cos(angle) * PUSH_DIST;
+  let newCy = y + Math.sin(angle) * PUSH_DIST;
+
+  newCx = clamp(newCx, rect.width/2 + 12, window.innerWidth - rect.width/2 - 12);
+  newCy = clamp(newCy, rect.height/2 + 12, window.innerHeight - rect.height/2 - 12);
+
+  noBtn.style.left = (newCx - rect.width/2) + 'px';
+  noBtn.style.top = (newCy - rect.height/2) + 'px';
+
+  const now = Date.now();
+  if(now - lastDodgeTick > 220){
+    lastDodgeTick = now;
+    dodgeCount++;
+    const yesScale = Math.min(1 + dodgeCount*0.06, MAX_SCALE);
+    yesBtn.style.transform = `scale(${yesScale})`;
+
+    const noScale = Math.max(1 - dodgeCount*0.015, MIN_NO_SCALE);
+    noBtn.style.transform = `scale(${noScale})`;
+  }
+}
+
+document.addEventListener('mousemove', (e) => fleeFrom(e.clientX, e.clientY));
+document.addEventListener('touchmove', (e) => {
+  if(e.touches && e.touches[0]) fleeFrom(e.touches[0].clientX, e.touches[0].clientY);
+}, {passive:true});
+// safety net: if it's ever actually pressed, treat it as one more dodge instead of a click
+noBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  // force a jump even if the cursor wasn't quite within SAFE_DIST
+  const rect = noBtn.getBoundingClientRect();
+  fleeFrom(rect.left + rect.width/2 - 1, rect.top + rect.height/2 - 1);
+});
+
+// ---------- step navigation ----------
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const step3 = document.getElementById('step3');
+
+function goToStep(el){
+  [step1, step2, step3].forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+
+  onStep1 = (el === step1);
+  if(onStep1){
+    noBtn.style.opacity = '1';
+    noBtn.style.pointerEvents = 'auto';
+    placeNoBtn();
+  }else{
+    noBtn.style.opacity = '0';
+    noBtn.style.pointerEvents = 'none';
+  }
+}
+
+yesBtn.addEventListener('click', ()=>{
+  const now = new Date();
+  const dateInput = document.getElementById('dateInput');
+  if(!dateInput.value){
+    dateInput.value = now.toISOString().slice(0,10);
+  }
+  goToStep(step2);
+});
+
+// ---------- submit -> save as a GitHub Issue ----------
+const submitBtn = document.getElementById('submitBtn');
+
+function fmtFa(date){
+  try{ return date.toLocaleString('fa-IR', {dateStyle:'full', timeStyle:'short'}); }
+  catch(e){ return date.toString(); }
+}
+
+async function saveToGithub(entry){
+  const body =
+`**تاریخ:** ${entry.date || '—'}
+**ساعت:** ${entry.time || '—'}
+**پیام:** ${entry.message || '—'}
+**تعداد فرار:** ${entry.dodges}
+**زمان ثبت:** ${entry.respondedAt}`;
+
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `token ${GITHUB_TOKEN}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      title: `پاسخ جدید — ${entry.respondedAt}`,
+      body
+    })
+  });
+  if(!res.ok){
+    throw new Error('GitHub API error: ' + res.status);
+  }
+}
+
+submitBtn.addEventListener('click', async ()=>{
+  const dateVal = document.getElementById('dateInput').value;
+  const timeVal = document.getElementById('timeInput').value;
+  const msg = document.getElementById('msgInput').value.trim();
+  const respondedAt = new Date();
+
+  const entry = {
+    date: dateVal || null, time: timeVal || null,
+    message: msg || null, dodges: dodgeCount,
+    respondedAt: respondedAt.toISOString()
+  };
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'در حال ثبت...';
+
+  try{
+    await saveToGithub(entry);
+  }catch(err){
+    console.error(err);
+    // still show a thank-you screen so the experience doesn't break for the visitor,
+    // but log the failure for you to notice in devtools if the token/repo isn't set up yet.
+  }
+
+  document.getElementById('thanksLine1').textContent =
+    (dateVal||timeVal) ? `پس می‌بینمت ${dateVal||''} ${timeVal ? 'ساعت '+timeVal : ''}` : 'زود بهت خبر می‌دم برای وقتش 💌';
+  document.getElementById('thanksLine2').textContent = dodgeCount > 0
+    ? `و ضمناً... ${dodgeCount} بار سعی کردی فرار کنی 😏`
+    : 'خیلی هم زود تصمیم گرفتی 😍';
+  document.getElementById('thanksStamp').textContent = 'ثبت شد در ' + fmtFa(respondedAt);
+
+  goToStep(step3);
+});
+</script>
+
+</body>
+</html>
