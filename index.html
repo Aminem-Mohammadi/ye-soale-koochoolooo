@@ -299,17 +299,61 @@ function fleeFrom(x, y){
   }
 }
 
-document.addEventListener('mousemove', (e) => fleeFrom(e.clientX, e.clientY));
-document.addEventListener('touchmove', (e) => {
-  if(e.touches && e.touches[0]) fleeFrom(e.touches[0].clientX, e.touches[0].clientY);
-}, {passive:true});
-// safety net: if it's ever actually pressed, treat it as one more dodge instead of a click
-noBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  // force a jump even if the cursor wasn't quite within SAFE_DIST
+// touch/coarse-pointer devices (phones, tablets) get a tap-to-teleport button;
+// fine-pointer devices (laptop/desktop with a mouse) get the cursor-chasing flee behavior
+const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+
+function bumpDodgeVisuals(){
+  dodgeCount++;
+  const yesScale = Math.min(1 + dodgeCount*0.06, MAX_SCALE);
+  yesBtn.style.transform = `scale(${yesScale})`;
+
+  const noScale = Math.max(1 - dodgeCount*0.015, MIN_NO_SCALE);
+  noBtn.style.transform = `scale(${noScale})`;
+}
+
+// jumps the "no" button to a random spot on screen, staying out of the corners
+function jumpToRandomPosition(){
+  if(!onStep1) return;
   const rect = noBtn.getBoundingClientRect();
-  fleeFrom(rect.left + rect.width/2 - 1, rect.top + rect.height/2 - 1);
-});
+  const minX = rect.width/2 + 12;
+  const maxX = window.innerWidth - rect.width/2 - 12;
+  const minY = rect.height/2 + 12;
+  const maxY = window.innerHeight - rect.height/2 - 12;
+
+  let newCx = minX + Math.random() * (maxX - minX);
+  let newCy = minY + Math.random() * (maxY - minY);
+
+  const safe = avoidCorners(newCx, newCy, rect);
+  newCx = safe.cx;
+  newCy = safe.cy;
+
+  noBtn.style.left = (newCx - rect.width/2) + 'px';
+  noBtn.style.top = (newCy - rect.height/2) + 'px';
+
+  bumpDodgeVisuals();
+}
+
+if(isTouchDevice){
+  // on phones/tablets there's no hover, so react on tap instead of on movement
+  noBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    jumpToRandomPosition();
+  }, {passive:false});
+  noBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    jumpToRandomPosition();
+  });
+}else{
+  document.addEventListener('mousemove', (e) => fleeFrom(e.clientX, e.clientY));
+  // safety net: if it's ever actually pressed, treat it as one more dodge instead of a click
+  noBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    // force a jump even if the cursor wasn't quite within SAFE_DIST
+    const rect = noBtn.getBoundingClientRect();
+    fleeFrom(rect.left + rect.width/2 - 1, rect.top + rect.height/2 - 1);
+  });
+}
 
 // ---------- step navigation ----------
 const step1 = document.getElementById('step1');
