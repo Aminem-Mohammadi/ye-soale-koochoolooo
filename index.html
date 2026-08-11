@@ -74,6 +74,8 @@
     box-shadow:0 8px 24px rgba(255,92,138,0.35);
     transform:scale(1);
     transform-origin:center;
+    position:relative;
+    z-index:6;
   }
   #yesBtn:hover{filter:brightness(1.05);}
   .dodge-size{ width:92px; height:44px; }
@@ -88,7 +90,7 @@
     font-weight:600;
     backdrop-filter:blur(4px);
     z-index:5;
-    transition:left 0.08s linear, top 0.08s linear, transform 0.5s ease, opacity 0.3s ease;
+    transition:left 0.08s linear, top 0.08s linear, transform 0.5s ease, opacity 0.5s ease;
   }
 
   /* --- form step --- */
@@ -225,8 +227,13 @@ const SAFE_DIST = 130;   // px — how close the cursor can get before it flees
 const PUSH_DIST = 170;   // px — how far it jumps to once it flees
 const MAX_SCALE = 3.4;   // how big "بله" can grow, keeps growing forever but capped so it never breaks layout
 const MIN_NO_SCALE = 0.45; // how small "نه" can shrink to, keeps shrinking very gently but never vanishes
-const CORNER_MARGIN = 110; // px — no-go margin around each of the 4 corners
+const CORNER_MARGIN = 160; // px — no-go margin around each of the 4 corners
+const VANISH_AFTER = 12; // dodges after which "no" fades away completely
 let onStep1 = true;
+let noVanished = false;
+
+// yesBtn drift toward the center of the screen as it gets dodged
+let yesTx = 0, yesTy = 0;
 
 function placeNoBtn(){
   const r = noSlot.getBoundingClientRect();
@@ -238,8 +245,8 @@ window.addEventListener('resize', placeNoBtn);
 
 function clamp(val, min, max){ return Math.max(min, Math.min(max, val)); }
 
-// keeps the button's target center out of the 4 corner zones,
-// nudging it along whichever edge it's closest to instead
+// keeps the button's target center fully out of the 4 corner zones,
+// clamping it back toward the center of whichever edge(s) it's near
 function avoidCorners(cx, cy, rect){
   const minX = rect.width/2 + 12;
   const maxX = window.innerWidth - rect.width/2 - 12;
@@ -252,8 +259,8 @@ function avoidCorners(cx, cy, rect){
   const nearBottom = (maxY - cy) < CORNER_MARGIN;
 
   if((nearLeft || nearRight) && (nearTop || nearBottom)){
-    // it's inside a corner pocket — push it out along the axis with more room
-    const jitter = Math.random()*40;
+    // it's inside a corner pocket — push it firmly out along both axes
+    const jitter = Math.random()*30;
     if(nearLeft)  cx = clamp(minX + CORNER_MARGIN + jitter, minX, maxX);
     if(nearRight) cx = clamp(maxX - CORNER_MARGIN - jitter, minX, maxX);
     if(nearTop)    cy = clamp(minY + CORNER_MARGIN + jitter, minY, maxY);
@@ -263,8 +270,46 @@ function avoidCorners(cx, cy, rect){
   return { cx, cy };
 }
 
+// moves the "yes" button a bit closer to the center of the viewport
+function pullYesToCenter(){
+  const rect = yesBtn.getBoundingClientRect();
+  const curCx = rect.left + rect.width/2;
+  const curCy = rect.top + rect.height/2;
+  const targetCx = window.innerWidth/2;
+  const targetCy = window.innerHeight/2;
+
+  // move 14% of the remaining distance each dodge, capped so it doesn't overshoot
+  yesTx += (targetCx - curCx) * 0.14;
+  yesTy += (targetCy - curCy) * 0.14;
+
+  const yesScale = Math.min(1 + dodgeCount*0.06, MAX_SCALE);
+  yesBtn.style.transform = `translate(${yesTx}px, ${yesTy}px) scale(${yesScale})`;
+}
+
+function vanishNoBtn(){
+  if(noVanished) return;
+  noVanished = true;
+  noBtn.style.opacity = '0';
+  noBtn.style.transform += ' scale(0.3)';
+  noBtn.style.pointerEvents = 'none';
+}
+
+function registerDodge(){
+  dodgeCount++;
+  pullYesToCenter();
+
+  const noScale = Math.max(1 - dodgeCount*0.02, MIN_NO_SCALE);
+  if(!noVanished){
+    noBtn.style.transform = `scale(${noScale})`;
+  }
+
+  if(dodgeCount >= VANISH_AFTER){
+    vanishNoBtn();
+  }
+}
+
 function fleeFrom(x, y){
-  if(!onStep1) return;
+  if(!onStep1 || noVanished) return;
   const rect = noBtn.getBoundingClientRect();
   const cx = rect.left + rect.width/2;
   const cy = rect.top + rect.height/2;
@@ -290,12 +335,7 @@ function fleeFrom(x, y){
   const now = Date.now();
   if(now - lastDodgeTick > 220){
     lastDodgeTick = now;
-    dodgeCount++;
-    const yesScale = Math.min(1 + dodgeCount*0.06, MAX_SCALE);
-    yesBtn.style.transform = `scale(${yesScale})`;
-
-    const noScale = Math.max(1 - dodgeCount*0.015, MIN_NO_SCALE);
-    noBtn.style.transform = `scale(${noScale})`;
+    registerDodge();
   }
 }
 
@@ -303,18 +343,9 @@ function fleeFrom(x, y){
 // fine-pointer devices (laptop/desktop with a mouse) get the cursor-chasing flee behavior
 const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
-function bumpDodgeVisuals(){
-  dodgeCount++;
-  const yesScale = Math.min(1 + dodgeCount*0.06, MAX_SCALE);
-  yesBtn.style.transform = `scale(${yesScale})`;
-
-  const noScale = Math.max(1 - dodgeCount*0.015, MIN_NO_SCALE);
-  noBtn.style.transform = `scale(${noScale})`;
-}
-
 // jumps the "no" button to a random spot on screen, staying out of the corners
 function jumpToRandomPosition(){
-  if(!onStep1) return;
+  if(!onStep1 || noVanished) return;
   const rect = noBtn.getBoundingClientRect();
   const minX = rect.width/2 + 12;
   const maxX = window.innerWidth - rect.width/2 - 12;
@@ -331,7 +362,7 @@ function jumpToRandomPosition(){
   noBtn.style.left = (newCx - rect.width/2) + 'px';
   noBtn.style.top = (newCy - rect.height/2) + 'px';
 
-  bumpDodgeVisuals();
+  registerDodge();
 }
 
 if(isTouchDevice){
@@ -349,6 +380,7 @@ if(isTouchDevice){
   // safety net: if it's ever actually pressed, treat it as one more dodge instead of a click
   noBtn.addEventListener('click', (e) => {
     e.preventDefault();
+    if(noVanished) return;
     // force a jump even if the cursor wasn't quite within SAFE_DIST
     const rect = noBtn.getBoundingClientRect();
     fleeFrom(rect.left + rect.width/2 - 1, rect.top + rect.height/2 - 1);
@@ -366,8 +398,10 @@ function goToStep(el){
 
   onStep1 = (el === step1);
   if(onStep1){
-    noBtn.style.opacity = '1';
-    noBtn.style.pointerEvents = 'auto';
+    if(!noVanished){
+      noBtn.style.opacity = '1';
+      noBtn.style.pointerEvents = 'auto';
+    }
     placeNoBtn();
   }else{
     noBtn.style.opacity = '0';
